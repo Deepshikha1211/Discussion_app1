@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Discussion App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: var(--box-shadow);
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .left-pane {
+            background-color: #fff;
+        }
+
+        .right-pane {
+            background-color: var(--background-color);
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .question-box {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+        }
+
+        .question-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .question-box h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .response {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .response h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        #resolveBtn {
+            background-color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+
+        #resolveBtn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="left-pane" id="questionList">
+            <h2>Discussion Topics</h2>
+            <!-- Questions will be dynamically added here -->
+        </div>
+        <div class="right-pane" id="rightPane">
+            <form id="questionForm">
+                <h2>Start a New Discussion</h2>
+                <input type="text" id="questionTitle" placeholder="Title" required>
+                <textarea id="questionBody" placeholder="What would you like to discuss?" rows="4" required></textarea>
+                <button type="submit">Submit Topic</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let selectedQuestion = null;
+
+        function renderQuestions() {
+            const questionList = document.getElementById('questionList');
+            questionList.innerHTML = '<h2>Discussion Topics</h2>';
+            questions.forEach((q, index) => {
+                const questionBox = document.createElement('div');
+                questionBox.className = 'question-box';
+                questionBox.innerHTML = `
+                    <h3>${q.title}</h3>
+                    <p>${q.question.substring(0, 100)}${q.question.length > 100 ? '...' : ''}</p>
+                    <small>${q.responses.length} response${q.responses.length !== 1 ? 's' : ''}</small>
+                `;
+                questionBox.addEventListener('click', () => showQuestion(index));
+                questionList.appendChild(questionBox);
+            });
+        }
+
+        function showQuestion(index) {
+            selectedQuestion = questions[index];
+            const rightPane = document.getElementById('rightPane');
+            rightPane.innerHTML = `
+                <h2>${selectedQuestion.title}</h2>
+                <p>${selectedQuestion.question}</p>
+                <br>
+                <button id="resolveBtn" onclick="resolveQuestion(${index})">Resolve Discussion</button>
+                <form id="responseForm">
+                    <h3>Add Your Thoughts</h3>
+                    <input type="text" id="responseName" placeholder="Your Name" required>
+                    <textarea id="responseComment" placeholder="Share your perspective..." rows="4" required></textarea>
+                    <button type="submit">Submit Response</button>
+                </form>
+                <br>
+                <h3>Previous Responses</h3>
+                <br>
+                <div id="responseList"></div>
+            `;
+            document.getElementById('responseForm').addEventListener('submit', submitResponse);
+            renderResponses();
+        }
+
+        function renderResponses() {
+            const responseList = document.getElementById('responseList');
+            responseList.innerHTML = '';
+            selectedQuestion.responses.forEach(r => {
+                const responseDiv = document.createElement('div');
+                responseDiv.className = 'response';
+                responseDiv.innerHTML = `
+                    <h4>${r.name}</h4>
+                    <p>${r.comment}</p>
+                    <small>${new Date(r.timestamp).toLocaleString()}</small>
+                `;
+                responseList.appendChild(responseDiv);
+            });
+        }
+
+        function submitQuestion(e) {
+            e.preventDefault();
+            const title = document.getElementById('questionTitle').value;
+            const question = document.getElementById('questionBody').value;
+            questions.push({ title, question, responses: [], timestamp: Date.now() });
+            renderQuestions();
+            e.target.reset();
+        }
+
+        function submitResponse(e) {
+            e.preventDefault();
+            const name = document.getElementById('responseName').value;
+            const comment = document.getElementById('responseComment').value;
+            selectedQuestion.responses.push({ name, comment, timestamp: Date.now() });
+            renderResponses();
+            e.target.reset();
+        }
+
+        function resolveQuestion(index) {
+            if (confirm('Are you sure you want to resolve this discussion? This action cannot be undone.')) {
+                questions.splice(index, 1);
+                renderQuestions();
+                document.getElementById('rightPane').innerHTML = `
+                    <form id="questionForm">
+                        <h2>Start a New Discussion</h2>
+                        <input type="text" id="questionTitle" placeholder="Title" required>
+                        <textarea id="questionBody" placeholder="What would you like to discuss?" rows="4" required></textarea>
+                        <button type="submit">Submit Topic</button>
+                    </form>
+                `;
+                document.getElementById('questionForm').addEventListener('submit', submitQuestion);
+            }
+        }
+
+        document.getElementById('questionForm').addEventListener('submit', submitQuestion);
+    </script>
+</body>
+</html>
